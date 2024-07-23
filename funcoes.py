@@ -1,8 +1,6 @@
 import sys
 import io
 
-ListaLED = []
-
 def leia_reg(arq) -> tuple[str, int]:
 
     try:
@@ -39,6 +37,7 @@ def busca(chave, imprimir=True) -> int:
             offset = 4
 
             if imprimir:
+
                 print(f'Busca pelo registro de "{chave}"')
 
             while buffer and not achou: # Enquanto tem algo no buffer e não achou
@@ -48,7 +47,9 @@ def busca(chave, imprimir=True) -> int:
                 if chave == key: # Se a chave procurada for igual a key do registro
 
                     achou = True
+
                     if imprimir:
+
                         print(f"{buffer} ({tam} bytes)")
 
                 else: # Se não for igual, faça o processo novamente
@@ -59,10 +60,13 @@ def busca(chave, imprimir=True) -> int:
             if not achou: # Se ele saiu do while indica que o arquivo acabou, logo ele não achou a chave no arquivo
 
                 if imprimir:
+
                     print(f'Jogo com identificador {chave} não encontrado.')
+
                 return -1
             
             if imprimir:
+
                 print()
 
             return offset
@@ -81,7 +85,9 @@ def imprimeLED(imprimir=True):
             led = int.from_bytes(ledCabecalho, byteorder='big', signed=True)  # Converte os bytes lidos do cabeçalho para um inteiro
 
             if led == -1:  # Verifica se a LED está vazia
+
                 if imprimir:
+
                     print()
                     print("LED está vazia.")
                     print()
@@ -100,6 +106,7 @@ def imprimeLED(imprimir=True):
                 proxOffset = int.from_bytes(arq.read(4), byteorder='big', signed=True)  # Lê os próximos 4 bytes para obter o próximo offset
 
                 if imprimir:
+
                     print(f"[offset: {led}, tam: {espaco}] -> ", end='')
 
                 led = proxOffset  # Atualiza a LED para o próximo offset
@@ -107,6 +114,7 @@ def imprimeLED(imprimir=True):
                 cont += 1
 
             if imprimir:
+
                 print("[offset: -1]")
                 print(f"Total: {cont} espaços disponíveis", end='')
                 print("\n")
@@ -114,7 +122,8 @@ def imprimeLED(imprimir=True):
     except IOError as e:
         print(f"Erro ao abrir o arquivo: {e}")
 
-def reinserirSobraLED(arq, sobra, offsetSobra):
+def reinserirSobraLED(arq, sobra, offsetSobra): # Função para decidir onde o registro será inserido na LED
+
     arq.seek(0)
     ledCabecalho = arq.read(4)
     led = int.from_bytes(ledCabecalho, byteorder='big', signed=True)
@@ -124,54 +133,60 @@ def reinserirSobraLED(arq, sobra, offsetSobra):
     inserido = False
 
     while offsetAtual != -1 and not inserido:
+
         arq.seek(offsetAtual)
         espacoAtual = int.from_bytes(arq.read(2), byteorder='big')
         arq.read(1)  # Pula o "*"
         proxOffset = int.from_bytes(arq.read(4), byteorder='big', signed=True)
 
         if sobra > espacoAtual:
-            # Encontrou a posição correta para inserir a sobra
-            if offsetAnterior == -1:
-                # Atualiza o cabeçalho da LED
-                arq.seek(0)
-                arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True))
+
+            if offsetAnterior == -1: # Encontrou a posição correta para inserir a sobra
+
+                arq.seek(0) 
+                arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True)) # Atualiza o cabeçalho da LED
+
             else:
-                # Atualiza o ponteiro do espaço anterior para apontar para a sobra
-                arq.seek(offsetAnterior + 3)
+
+                arq.seek(offsetAnterior + 3)  # Atualiza o ponteiro do espaço anterior para apontar para a sobra
                 arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True))
 
-            # Configura a sobra para apontar para o espaço atual
-            arq.seek(offsetSobra)
+            arq.seek(offsetSobra) # Configura a sobra para apontar para o espaço atual
             arq.write(sobra.to_bytes(2, byteorder='big'))  # Escreve o tamanho da sobra
             arq.write(b"*")  # Escreve o marcador "*"
             arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True))  # Encadeia com o próximo espaço
             inserido = True
+
         else:
+
             offsetAnterior = offsetAtual
             offsetAtual = proxOffset
 
     if not inserido:
-        # Se não encontrou uma posição, insere no final
-        if offsetAnterior == -1:
-            # Se a LED estava vazia, atualiza o cabeçalho
+
+        if offsetAnterior == -1: # Se não encontrou uma posição, insere no final
+
             arq.seek(0)
-            arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True))
+            arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True)) # Se a LED estava vazia, atualiza o cabeçalho
+
         else:
-            # Atualiza o ponteiro do último espaço para apontar para a sobra
-            arq.seek(offsetAnterior + 3)
+
+            arq.seek(offsetAnterior + 3) # Atualiza o ponteiro do último espaço para apontar para a sobra
             arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True))
 
-        # Configura a sobra para ser o último elemento
-        arq.seek(offsetSobra)
+        arq.seek(offsetSobra) # Configura a sobra para ser o último elemento
         arq.write(sobra.to_bytes(2, byteorder='big'))  # Escreve o tamanho da sobra
         arq.write(b"*")  # Escreve o marcador "*"
         arq.write((-1).to_bytes(4, byteorder='big', signed=True))  # Indica que não há próximo
 
 def insere(registro):
+
     try:
+
         chave = registro.split('|')[0]
 
         with open("dados.dat", 'r+b') as arq:
+
             arq.seek(0)
             ledCabecalho = arq.read(4)
             led = int.from_bytes(ledCabecalho, byteorder='big', signed=True)
@@ -187,20 +202,25 @@ def insere(registro):
             espaco = None  # Garantindo que espaco seja definido
 
             while offsetAtual != -1 and not encontrado:
+
                 arq.seek(offsetAtual)
                 espaco = int.from_bytes(arq.read(2), byteorder='big')
                 arq.read(1)  # Pula o "*"
                 proxOffset = int.from_bytes(arq.read(4), byteorder='big', signed=True)
 
                 if espaco >= tamRegistro:
+
                     encontrado = True
                     sobra = espaco - tamRegistro - 2
 
                     # Atualiza a cabeça da LED para o próximo espaço livre
                     if offsetAnterior == -1:  # Se o espaço estava na cabeça da LED
+
                         arq.seek(0)
                         arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True))
+
                     else:  # Atualiza o encadeamento da LED
+
                         arq.seek(offsetAnterior + 3)
                         arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True))
 
@@ -212,21 +232,27 @@ def insere(registro):
                     offsetInsercao = offsetAtual + tamRegistro + 2
 
                 else:
+
                     offsetAnterior = offsetAtual
                     offsetAtual = proxOffset
 
             if encontrado:
+
                 if sobra > 10:  # Se encontrou espaço e sobra é significativa
+
                     print(f"Tamanho do espaço reutilizado: {espaco} bytes (Sobra de {sobra} bytes)")
                     print(f"Local: offset = {offsetAtual} ({ledCabecalho})")
                     print()
                     reinserirSobraLED(arq, sobra, offsetInsercao)
+
                 else:  # Se não há sobra significativa
+
                     print(f"Tamanho do espaço reutilizado: {espaco} bytes")
                     print(f"Local: offset = {offsetAtual} ({ledCabecalho})")
                     print()
 
             if not encontrado:
+                
                 # Se não encontrou espaço, insere no final do arquivo
                 arq.seek(0, io.SEEK_END)
                 posicao = arq.tell()
