@@ -72,6 +72,7 @@ def busca(chave, imprimir=True) -> int:
             return offset
 
     except OSError as e:
+        
         print(f"Erro ao abrir 'dados.dat': {e}")
 
 def imprimeLED(imprimir=True):
@@ -120,6 +121,7 @@ def imprimeLED(imprimir=True):
                 print("\n")
 
     except IOError as e:
+
         print(f"Erro ao abrir o arquivo: {e}")
 
 def reinserirSobraLED(arq, sobra, offsetSobra): # Função para decidir onde o registro será inserido na LED
@@ -252,7 +254,7 @@ def insere(registro):
                     print()
 
             if not encontrado:
-                
+
                 # Se não encontrou espaço, insere no final do arquivo
                 arq.seek(0, io.SEEK_END)
                 posicao = arq.tell()
@@ -263,6 +265,7 @@ def insere(registro):
                 print()
 
     except OSError as e:
+
         print(f"Erro ao abrir 'dados.dat': {e}")
 
 def remove(chave):
@@ -347,6 +350,7 @@ def remove(chave):
                 print()
 
     except OSError as e:
+
         print(f"Erro ao abrir 'dados.dat': {e}")
 
 def arquivo(nomeArq):
@@ -398,16 +402,23 @@ def arquivo(nomeArq):
                 i += 1  # Incrementa o contador para processar a próxima linha
 
     except OSError as e:
+
         print(f"Erro ao abrir '{nomeArq}': {e}")
 
 nomeArq = "arquivo_operacoes.txt"
 
 if __name__ == "__main__":
+
     if len(sys.argv) == 3 and sys.argv[1] == '-e': # Executa as operações do arquivo_operacoes.txt
+
         nomeArq = sys.argv[2]
         arquivo(nomeArq)
+
     elif len(sys.argv) == 2 and sys.argv[1] == '-p': # Mostra a LED com os espaços disponiveis
+
         imprimeLED(imprimir=True)
+
     else:
+
         print("Uso: python funcoes.py -e arquivo_operacoes.txt") 
         print("Ou: python funcoes.py -p")
