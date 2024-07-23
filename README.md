@@ -19,11 +19,17 @@ $ python funcoes.py -e arquivo_operacoes.txt
 Arquivo (arquivo_operacoes.txt):
 
 b 22
+
 i 147|Resident Evil 2|1998|Survival horror|Capcom|PlayStation|
+
 r 99
+
 r 230
+
 i 181|Pac-Man|1980|Maze|Namco|Arcade|
+
 i 144|The Sims|2000|Life simulation|Electronic Arts|PC|
+
 
 Teremos também um arquivo chamado funcoes.py, que tem o intuito de executar todas as operacoes do arquivo_operacoes.txt identificando os registros e as operações realizadas, as funcionalidades principais que o funcoes.py tem:
 
