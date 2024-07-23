@@ -26,7 +26,7 @@ i 144|The Sims|2000|Life simulation|Electronic Arts|PC|
 Teremos também um arquivo chamado funcoes.py, que tem o intuito de executar todas as operacoes do arquivo_operacoes.txt identificando os registros e as operações realizadas, as funcionalidades principais que o funcoes.py tem:
 
 • Busca de um jogo pela CHAVE; 
- Inserção de um novo jogo; 
- • Reinserir a sobra na LED após a inserção; 
- • Remoção de um jogo; 
- • Imprimir a LED;
+• Inserção de um novo jogo; 
+• Reinserir a sobra na LED após a inserção; 
+• Remoção de um jogo; 
+• Imprimir a LED;
