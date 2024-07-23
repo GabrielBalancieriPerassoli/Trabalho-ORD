@@ -72,7 +72,7 @@ def busca(chave, imprimir=True) -> int:
             return offset
 
     except OSError as e:
-        
+
         print(f"Erro ao abrir 'dados.dat': {e}")
 
 def imprimeLED(imprimir=True):
@@ -126,55 +126,55 @@ def imprimeLED(imprimir=True):
 
 def reinserirSobraLED(arq, sobra, offsetSobra): # Função para decidir onde o registro será inserido na LED
 
-    arq.seek(0)
-    ledCabecalho = arq.read(4)
-    led = int.from_bytes(ledCabecalho, byteorder='big', signed=True)
+    arq.seek(0) # Posiciona no começo do arquivo
+    ledCabecalho = arq.read(4) # Lê os 4 bytes (cabeçalho)
+    led = int.from_bytes(ledCabecalho, byteorder='big', signed=True) # Converte os bytes lidos do cabeçalho para um inteiro
 
-    offsetAnterior = -1
-    offsetAtual = led
-    inserido = False
+    offsetAnterior = -1 # Inicia o offsetAnterior como -1 
+    offsetAtual = led # Inicia o offsetAtual como LED
+    inserido = False # Inicia variável de controle como FALSE
 
-    while offsetAtual != -1 and not inserido:
+    while offsetAtual != -1 and not inserido: # Enquanto o offsetAtual é diferente de -1 e não foi inserido
 
-        arq.seek(offsetAtual)
-        espacoAtual = int.from_bytes(arq.read(2), byteorder='big')
+        arq.seek(offsetAtual) # Faz um seek para o offsetAtual
+        espacoAtual = int.from_bytes(arq.read(2), byteorder='big') # Pega o tamanho do espacoAtual
         arq.read(1)  # Pula o "*"
-        proxOffset = int.from_bytes(arq.read(4), byteorder='big', signed=True)
+        proxOffset = int.from_bytes(arq.read(4), byteorder='big', signed=True) # Inicializa uma variável proxOffset que pega o prox do offsetAtual
 
-        if sobra > espacoAtual:
+        if sobra > espacoAtual: # Se a tamanho da sobra for maior que o tamanho do espacoAtual
 
             if offsetAnterior == -1: # Encontrou a posição correta para inserir a sobra
 
-                arq.seek(0) 
+                arq.seek(0) # Posiciona no começo do arquivo
                 arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True)) # Atualiza o cabeçalho da LED
 
             else:
 
-                arq.seek(offsetAnterior + 3)  # Atualiza o ponteiro do espaço anterior para apontar para a sobra
-                arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True))
+                arq.seek(offsetAnterior + 3)  # Atualiza o ponteiro do espaço anterior para apontar para a sobra (ele ainda é maior que o tamanho da sobra)
+                arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True)) # Escreve o offsetSobra no espacoAtual
 
-            arq.seek(offsetSobra) # Configura a sobra para apontar para o espaço atual
-            arq.write(sobra.to_bytes(2, byteorder='big'))  # Escreve o tamanho da sobra
+            arq.seek(offsetSobra) # Configura a sobra para apontar para o espacoAtual (para poder fazer uma fragmentação externa)
+            arq.write(sobra.to_bytes(2, byteorder='big'))  # Escreve o tamanho da sobra primeiro
             arq.write(b"*")  # Escreve o marcador "*"
             arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True))  # Encadeia com o próximo espaço
-            inserido = True
+            inserido = True # Indica que a sobra foi inserida na LED
 
         else:
 
-            offsetAnterior = offsetAtual
-            offsetAtual = proxOffset
+            offsetAnterior = offsetAtual # Faz o offsetAnterior receber o offsetAtual para poder percorrer a LED até que se ache um espaço
+            offsetAtual = proxOffset # Faz o offsetAtual receber o proxOffset para poder percorrer a LED até que se ache um espaço
 
-    if not inserido:
+    if not inserido: # Se não achou uma posição na LED
 
-        if offsetAnterior == -1: # Se não encontrou uma posição, insere no final
+        if offsetAnterior == -1: # Insere a sobra no final do arquivo
 
-            arq.seek(0)
+            arq.seek(0) # Posiciona no começo do arquivo
             arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True)) # Se a LED estava vazia, atualiza o cabeçalho
 
         else:
 
             arq.seek(offsetAnterior + 3) # Atualiza o ponteiro do último espaço para apontar para a sobra
-            arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True))
+            arq.write(offsetSobra.to_bytes(4, byteorder='big', signed=True)) # Escreve o offsetSobra
 
         arq.seek(offsetSobra) # Configura a sobra para ser o último elemento
         arq.write(sobra.to_bytes(2, byteorder='big'))  # Escreve o tamanho da sobra
@@ -185,81 +185,79 @@ def insere(registro):
 
     try:
 
-        chave = registro.split('|')[0]
+        chave = registro.split('|')[0] # Pega a chave do registro 
 
         with open("dados.dat", 'r+b') as arq:
 
-            arq.seek(0)
-            ledCabecalho = arq.read(4)
-            led = int.from_bytes(ledCabecalho, byteorder='big', signed=True)
+            arq.seek(0) # Posiciona no começo do arquivo
+            ledCabecalho = arq.read(4) # Lê os 4 bytes (cabeçalho)
+            led = int.from_bytes(ledCabecalho, byteorder='big', signed=True)  # Converte os bytes lidos do cabeçalho para um inteiro
 
             print(f'Inserção do registro de chave "{chave}" ({len(registro)} bytes)')
 
-            tamRegistro = len(registro)  # Inclui os bytes do tamanho do registro
+            tamRegistro = len(registro)  # Pega o tamanho do registro em bytes
 
-            encontrado = False
-            offsetAnterior = -1
-            offsetAtual = led
-            offsetInsercao = None
+            encontrado = False # Inicia variável de controle como FALSE
+            offsetAnterior = -1 # Inicia o offsetAnterior como -1 
+            offsetAtual = led # Inicia o offsetAtual como LED
+            offsetInsercao = None # Garantindo que o offsetInserção seja definido
             espaco = None  # Garantindo que espaco seja definido
 
-            while offsetAtual != -1 and not encontrado:
+            while offsetAtual != -1 and not encontrado: # Enquanto o offsetAtual for diferente de -1 e não encontrou
 
-                arq.seek(offsetAtual)
-                espaco = int.from_bytes(arq.read(2), byteorder='big')
+                arq.seek(offsetAtual) # Faz um seek para o offsetAtual
+                espaco = int.from_bytes(arq.read(2), byteorder='big') # Transforma o tamanho de bytes para inteiro
                 arq.read(1)  # Pula o "*"
-                proxOffset = int.from_bytes(arq.read(4), byteorder='big', signed=True)
+                proxOffset = int.from_bytes(arq.read(4), byteorder='big', signed=True) # Inicializa uma variável proxOffset que pega o prox do offsetAtual
 
-                if espaco >= tamRegistro:
+                if espaco >= tamRegistro: # Se o espaço da cabeça da LED for maior que o tamanho do registro que eu quero inserir
 
-                    encontrado = True
-                    sobra = espaco - tamRegistro - 2
+                    encontrado = True # Quer dizer que eu encontrei uma espaço grande o suficiente para inserir meu registro
+                    sobra = espaco - tamRegistro - 2 # Então eu calculo o espaço da cabeça da LED - o tamanho do registro que eu quero inserir - 2 (tamanho)
 
                     # Atualiza a cabeça da LED para o próximo espaço livre
                     if offsetAnterior == -1:  # Se o espaço estava na cabeça da LED
 
-                        arq.seek(0)
-                        arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True))
+                        arq.seek(0) # Posiciona no começo do arquivo
+                        arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True)) # Escreve o proxOffset no no cabeçalho
 
                     else:  # Atualiza o encadeamento da LED
 
-                        arq.seek(offsetAnterior + 3)
-                        arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True))
+                        arq.seek(offsetAnterior + 3) # Se o offsetAnterior é != -1 então fazemos um seek para depois da '*'
+                        arq.write(proxOffset.to_bytes(4, byteorder='big', signed=True)) # Escreve o proxOffset
 
-                    # Posiciona para escrever o registro
-                    arq.seek(offsetAtual)
-                    arq.write(tamRegistro.to_bytes(2, byteorder='big'))
-                    arq.write(registro.encode('utf-8'))
+                    arq.seek(offsetAtual) # Posiciona para escrever o registro
+                    arq.write(tamRegistro.to_bytes(2, byteorder='big')) # Escreve primeiro o tamanho do registro inserido
+                    arq.write(registro.encode('utf-8')) # Escreve o registro depois do tamanho
 
-                    offsetInsercao = offsetAtual + tamRegistro + 2
+                    offsetInsercao = offsetAtual + tamRegistro + 2 # Após a inserção temos uma possível possibilidade de ter uma fragmentação externa (sobra > 10 bytes)
 
-                else:
+                else: # Se o espaço não for maior ou igual ao tamanho do registro que eu quero inserir
 
-                    offsetAnterior = offsetAtual
-                    offsetAtual = proxOffset
+                    offsetAnterior = offsetAtual # Faz o offsetAnterior receber o offsetAtual para poder percorrer a LED
+                    offsetAtual = proxOffset # Faz o offsetAtual receber o proxOffset para poder percorrer a LED
 
-            if encontrado:
+            if encontrado: # Se ele encontrou um espaço disponível para inserir o registro
 
-                if sobra > 10:  # Se encontrou espaço e sobra é significativa
+                if sobra > 10:  # Se a sobra é maior que 10, então voltamos o que sobrar para a LED após a inserção
 
                     print(f"Tamanho do espaço reutilizado: {espaco} bytes (Sobra de {sobra} bytes)")
                     print(f"Local: offset = {offsetAtual} ({ledCabecalho})")
                     print()
-                    reinserirSobraLED(arq, sobra, offsetInsercao)
+                    reinserirSobraLED(arq, sobra, offsetInsercao) # Então verifica aonde devemos voltar a sobra para LED através da função "reinserirSobraLED"
 
-                else:  # Se não há sobra significativa
+                else:  # Se a sobra é menor ou igual a 10, então não voltamos o que sobrar para a LED após a inserção
 
                     print(f"Tamanho do espaço reutilizado: {espaco} bytes")
                     print(f"Local: offset = {offsetAtual} ({ledCabecalho})")
                     print()
 
-            if not encontrado:
+            if not encontrado: # Se não encontrou um espaço disponível para inserir o registro, insere no final do arquivo
 
-                # Se não encontrou espaço, insere no final do arquivo
-                arq.seek(0, io.SEEK_END)
-                posicao = arq.tell()
-                arq.write(tamRegistro.to_bytes(2, byteorder='big'))
-                arq.write(registro.encode('utf-8'))
+                arq.seek(0, io.SEEK_END) # Faz um seek para o final do arquivo
+                posicao = arq.tell() # Pega o offset do final do arquivo
+                arq.write(tamRegistro.to_bytes(2, byteorder='big')) # Escreve primeiro o tamanho do registro inserido no final do arquivo
+                arq.write(registro.encode('utf-8')) # Escreve o registro no final do arquivo depois do tamanho
                 print(f'Tamanho do espaço utilizado: {tamRegistro} bytes')
                 print(f'Local: fim do arquivo (offset = {posicao})')
                 print()
